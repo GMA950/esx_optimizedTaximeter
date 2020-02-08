@@ -1,0 +1,265 @@
+@font-face {
+	/*font-family: "Digital-7";
+	src: url( "digital-7.regular.ttf" );*/
+	font-family: "OPTICalculator";
+	src: url("OPTICalculator.otf");
+}
+
+@-webkit-keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    49% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@-webkit-keyframes blink2 {
+	0% {
+			opacity: 1;
+	}
+	49% {
+			opacity: 1;
+	}
+	50% {
+			opacity: 0;
+	}
+	100% {
+			opacity: 0;
+	}
+}
+
+/* Police Radar */
+#meter {
+	width: 505px;
+	height: 162px;
+	/*
+	position: absolute;
+	bottom: 0px;
+	right: 10px;
+	*/
+	position: relative;
+	top: 63%;
+	left: 36.5%;
+	margin: auto;
+
+	color: white;
+	border-radius: 10px;
+
+	/*display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	align-items: center;*/
+
+	background-image: url("img/fare2.png");
+}
+
+#fare {
+	/*
+	width: 370px;
+	height: 120px;
+	*/
+	width: 455px;
+	height: 120px;
+
+	/*
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	margin: auto;
+	*/
+	position: relative;
+	/*bottom: 2%;
+	right: 2%;*/
+	left: 0.2%;
+	bottom: 7%;
+	margin: auto;
+
+	color: white;
+	border-radius: 10px;
+	
+	display: grid;
+	grid-column-gap: 33px;
+	grid-row-gap: 40px;
+	/*grid-template-columns: repeat(2, 3fr) repeat(3, 0.5fr) 30% 30%;*/
+	grid-template-columns: 40% 28.5% 18%;
+	/*background-image: url("img/fare2.png");*/
+	padding: 2%;
+}
+/*|
+#fare .label {
+	display: grid;
+	grid-area: label;
+}
+
+#fare .container {
+	display: grid;
+	grid-template-columns: 100%;
+	grid-template-rows: 75% 25%;
+	grid-template-areas:
+		"meter-field"
+		"label";
+		margin-top: 35px;
+		margin-bottom: 30px;
+}*/
+#fare .label {
+	display: grid;
+	grid-area: label;
+}
+
+#fare .container {
+	/*position: relative;
+	left: 20%;*/
+	display: grid;
+	grid-template-columns: 100%; /*50*/
+	grid-template-rows: 85% 15%;
+	grid-row-gap: 16%;
+	grid-template-areas:
+		"meter-field"
+		"label";
+		margin-top: 35px;
+		margin-bottom: 30px;
+}
+
+#baselight{
+	width: 18px; /*50px*/
+	height: 18px;
+	position: relative;
+	right: 40.1%;
+	bottom: 22.5%;
+	margin: auto;
+	background-size: 100%;
+	background-image: url("img/offlight.png");
+}
+
+#greenlight{
+	/*width: 50px;
+	height: 50px;*/
+	position: relative;
+	/*
+	left: 1.5%;
+	bottom: 7%;*/
+	margin: auto;
+	/*background-image: url("img/greenlight.png");*/
+	-webkit-animation: blink 1s;
+	-webkit-animation-iteration-count: infinite;
+}
+
+#redlight{
+	/*width: 50px;
+	height: 50px;*/
+	position: relative;
+	/*
+	left: 1.5%;
+	bottom: 7%;*/
+	margin: auto;
+	/*background-image: url("img/greenlight.png");*/
+	-webkit-animation: blink 4s;
+	-webkit-animation-iteration-count: infinite;
+}
+/*
+#contenedor1{
+	width: 200px;
+	height: 50px;
+	position: relative;
+	left: 5%;
+	bottom: -2%;
+	display: grid;
+	grid-template-columns: 100%; /*50*//*
+	grid-template-rows: 85% 15%;
+	grid-template-areas:
+		"meter-field"
+		"label";
+		margin-top: 35px;
+		margin-bottom: 30px;
+}
+/*
+#contenedor2{
+	width: 200px;
+	height: 50px;
+	position: relative;
+	left: 45%;
+	bottom: 50.5%;
+	display: grid;
+	grid-template-columns: 100%; /*50*//*
+	grid-template-rows: 85% 15%;
+	grid-template-areas:
+		"meter-field"
+		"label";
+		margin-top: 35px;
+		margin-bottom: 30px;
+		/*margin-left: 10%;*//*
+}
+*/
+
+#fare .meter-field {
+	/*display: grid;*/
+	/*grid-area: meter-field;*/
+	/*font-family: "Verdana";*/
+	/*background-color: black;*/
+	font-family: "OPTICalculator";
+	color: red;
+	font-weight: bold;
+	font-size: 43px;
+	letter-spacing: 3px;
+	text-align: left; /*center*/
+	/*overflow-x: hidden;*/
+}
+
+#fare .label {
+	width: 100%;
+	height: 100%;
+	/*position: relative;
+	bottom: 5%;*/
+	/*background-color: black;*/
+	/*font-family: Verdana;*/
+	font-family: "OPTICalculator";
+	font-weight: bold;
+	font-size: 12px;
+	text-align: center;
+}
+
+/*
+#config {
+	background-image: url("img/phone.png");
+	width: 280px;
+	height: 450px;
+	position: absolute;
+	left: 90%;
+	transform: translateX(-50%);
+  padding: 10px;
+	position: absolute;
+	top: 65%;
+	margin-top: -250px;
+	margin-left: auto;
+	margin-right: auto;
+	padding-bottom: 20px;
+  text-align: center;
+  color: #333;
+}
+
+#config h1{
+  margin-top: 120px;
+  font-size: 18px;
+  font-family: 'Digital-7';
+   text-align: center;
+}
+
+#config .button{
+  font-family: 'Arial';
+  padding: 8px;
+  width: 100px;
+  opacity: 0.8;
+  font-size: 12px;
+  margin: 0 auto;
+  background:  #efc700;
+  margin-bottom: 10px;
+   text-align: center;
+}
+*/
