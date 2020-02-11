@@ -1,6 +1,6 @@
-# esx_OptimizedTaximeter
-
-This ESX Taxi Meter is a plugin that adds a fare meter to your server. Great for those
+# THIS BRANCH COMES WITH CUSTOM UI!
+# esx_taximeter
+ESX Taxi Meter is a plugin that adds a fare meter to your server. Great for those
 who work as an Uber, Taxi, Limo, Tow, Aircraft Ferry or any other job that might
 charge per mile of travel.
 
@@ -9,107 +9,13 @@ enough and a "distance" fare which shows a fare total based upon the distance
 traveled. The driver is the "owner" of the meter and any passengers in the car
 will be able to see the meter if it is active.
 
-In the configuration file you can set restrictions, type of fares, fare rate, a base fare amount, etc.
+In the configuration file you can set restrictions on what vehicle and what ESX
+jobs can use the meter. Currently supports both imperial and metric measurements.
 
-The meter needs to be launched using F6 menu of the esx_taxijob 
-
-# Screenshots
-
-![screenshot](https://i.imgur.com/zyRvjDC.jpg)
+The meter can be launched by using F6
 
 # Requirements
-- ESX
-- esx_taxijob
-- Replace OpenMobileTaxiActionsMenu() in the client script of esx_taxijob
-
-# OpenMobileTaxiActionsMenu()
-
-## Replace your OpenMobileTaxiActionsMenu() in your esx_taxijob/client/main.lua with this one
-
-```lua
-function OpenMobileTaxiActionsMenu()
-	ESX.UI.Menu.CloseAll()
-
-	ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'mobile_taxi_actions',
-	{
-		title    = 'Taxi',
-		align    = 'top-left',
-		elements = {
-			{ label = _U('billing'),   value = 'billing' },
-			{ label = _U('taximeter'), value = 'taximeter' },
-			{ label = _U('taximeter_pause'), value = 'taximeterPause' },
-			{ label = _U('start_job'), value = 'start_job' }
-		}
-	}, function(data, menu)
-		if data.current.value == 'billing' then
-
-			ESX.UI.Menu.Open('dialog', GetCurrentResourceName(), 'billing', {
-				title = _U('invoice_amount')
-			}, function(data, menu)
-
-				local amount = tonumber(data.value)
-				if amount == nil then
-					ESX.ShowNotification(_U('amount_invalid'))
-				else
-					menu.close()
-					local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
-					if closestPlayer == -1 or closestDistance > 3.0 then
-						ESX.ShowNotification(_U('no_players_near'))
-					else
-						TriggerServerEvent('esx_billing:sendBill', GetPlayerServerId(closestPlayer), 'society_taxi', 'Taxi', amount)
-						ESX.ShowNotification(_U('billing_sent'))
-					end
-
-				end
-
-			end, function(data, menu)
-				menu.close()
-			end)
-		elseif data.current.value == 'taximeter' then
-			if IsInAuthorizedVehicle() then
-				TriggerEvent('esx_taximeter:toggleTaximeter', false)
-			else
-				ESX.ShowNotification(_U('not_taxi'))
-			end
-		elseif data.current.value == 'taximeterPause' then
-			if IsInAuthorizedVehicle() then
-				TriggerEvent('esx_taximeter:pauseTaximeter')
-			else
-				ESX.ShowNotification(_U('not_taxi'))
-			end
-		elseif data.current.value == 'start_job' then
-			if OnJob then
-				StopTaxiJob()
-			else
-				if ESX.PlayerData.job ~= nil and ESX.PlayerData.job.name == 'taxi' then
-					local playerPed = PlayerPedId()
-					local vehicle   = GetVehiclePedIsIn(playerPed, false)
-
-					if IsPedInAnyVehicle(playerPed, false) and GetPedInVehicleSeat(vehicle, -1) == playerPed then
-						if tonumber(ESX.PlayerData.job.grade) >= 3 then
-							StartTaxiJob()
-						else
-							if IsInAuthorizedVehicle() then
-								StartTaxiJob()
-							else
-								ESX.ShowNotification(_U('must_in_taxi')) --ADD THIS TRANSLATION IN YOUR LOCAL
-							end
-						end
-					else
-						if tonumber(ESX.PlayerData.job.grade) >= 3 then
-							ESX.ShowNotification(_U('must_in_vehicle')) --ADD THIS TRANSLATION IN YOUR LOCAL
-						else
-							ESX.ShowNotification(_U('must_in_taxi')) --ADD THIS TRANSLATION IN YOUR LOCAL
-						end
-					end
-				end
-			end
-		end
-	end, function(data, menu)
-		menu.close()
-	end)
-end
-```
+ESX
 
 # Installation
 Run inside of your server-data/resources folder
@@ -119,8 +25,7 @@ start esx_taximeter
 ```
 
 # Known Issues
-When a new passenger gets in the vehicle, the driver will need to toggle the radar to
-make it appear.
+Nothing Special
 
 # Settings
 ________________________Hotkey__________________________
@@ -134,8 +39,6 @@ I might go back to getting it from the config but this was more functional for n
 ________________________Config__________________________
 I left in some config options, should be self explanatory.
 You can still change mi to km and the restricted vehicle classes etc.
-
-ORIGINAL SCRIPT https://github.com/Dexterin0/esx_taximeter/tree/withui
 
 Enjoy!
 

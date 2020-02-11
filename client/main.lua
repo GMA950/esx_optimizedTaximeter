@@ -16,11 +16,7 @@ ESX = nil
 local lastLocation = nil
 local playerJobName = nil
 local configOpen = false
-local configOpenFirstTime = false
-local playersInVehicle = {}
-local firstConfigOpenInVehicle = false
 local PlayerData = nil
-local meterOwner = false
 --local pause = false
 
 
@@ -39,13 +35,13 @@ local meterAttrs = {
 
 local taxActive = false
 local playersInTaxi = {}
-local isInTaxi = false
+local isPassenger = false
 local wasDriver = false
-local habiaUnPasajero = false
 local lastFares = {}
+--local scanTaxi = false
 
 
---===================================================================
+--=================================================================== ESX STUFF
 Citizen.CreateThread(function()
 	while ESX == nil do
 		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
@@ -74,19 +70,43 @@ AddEventHandler('esx:setJob', function(job)
 end)
 --===================================================================
 
+--// THREADS
+--[[
+if IsControlPressed(0, Keys["LEFTSHIFT"]) then  --
+      if IsControlJustReleased(0, Keys["E"]) then 
+]]
+
+Citizen.CreateThread(function()
+	while true do
+		Citizen.Wait(10)
+    if IsControlJustReleased(0, Keys["1"]) then  --
+      if playerJobName == 'taxi' and IsPedInAnyVehicle(PlayerPedId(), false) then 
+        if IsInAuthorizedVehicle() then
+          TriggerEvent('esx_taximeter:toggleTaximeter', false)
+        end
+      end
+    end
+    if IsControlJustReleased(0, Keys["2"]) then 
+      if playerJobName == 'taxi' and IsPedInAnyVehicle(PlayerPedId(), false) then
+        if taxActive and IsInAuthorizedVehicle() then
+          TriggerEvent('esx_taximeter:pauseTaximeter')
+        end
+      end
+    end
+	end
+end)
 
 Citizen.CreateThread(function() --DESACTIVA EL TAXIMETRO CUANDO SE BAJA DE UN TAXI (pasajero o conductor)
   while true do
     Citizen.Wait(500)
     local ped = GetPlayerPed(-1)
 
-    if playerJobName == 'taxi' or isInTaxi then 
+    if wasDriver or isPassenger then 
         if taxActive and not IsPedSittingInAnyVehicle(PlayerPedId()) then
           if wasDriver then --si el que se bajo era el conductor, desactiva todo para todos
             wasDriver = false
             TriggerEvent('esx_taximeter:toggleTaximeter', true)
           else
-            setComeBack() --si el cliente se vuelve a subir al taxi y el taximetro sigue encendido, se sincroniza con la nueva info
             TriggerEvent('esx_taximeter:noPassenger')
           end
         end
@@ -94,24 +114,23 @@ Citizen.CreateThread(function() --DESACTIVA EL TAXIMETRO CUANDO SE BAJA DE UN TA
   end
 end)
 
-function setComeBack()
-  local driverPed = GetPedInVehicleSeat(GetVehiclePedIsIn(GetPlayerPed(-1), true), -1) --true porque se bajo del vehiculo
-  if driverPed ~= 0 then
-    for _, player in ipairs(GetActivePlayers()) do
-      local ped = GetPlayerPed(player)
-      if ped == driverPed then
-        TriggerServerEvent('esx_taximeter:setComeBack', GetPlayerServerId(player))
+Citizen.CreateThread(function()
+  while true do
+    if taxActive then
+      if not isPassenger then --los calculos ahora solo los hace el conductor
+        getPlayersinTaxi(GetVehiclePedIsIn(GetPlayerPed(-1), false), false)--probar colocarlo antes del wait
+        vehicleOnStop() --por la lucesita no lo meto dentro del if
+        if not meterAttrs['meterPause'] then
+          calculateFareAmount()
+        end
       end
+      updateMeter()
     end
+    Citizen.Wait(2000)
   end
-end
-
-RegisterNetEvent("esx_taximeter:notRestart")
-AddEventHandler("esx_taximeter:notRestart", function()
-  habiaUnPasajero = true
-  --lastFares = meterAttrs
 end)
 
+--// FUNCTIONS
 
 function resetTax()
   lastLocation = GetEntityCoords(GetPlayerPed(-1))
@@ -130,172 +149,22 @@ function resetTax()
   updateMeter()
 end
 
-RegisterNetEvent("esx_taximeter:toggleTaximeter")
-AddEventHandler("esx_taximeter:toggleTaximeter", function(hotExit)
-  if taxActive then
-    resetTax()
-    taxActive = false
-    habiaUnPasajero = false
-    --pause = false
-    print("debug1")
-    getPlayersinTaxi(GetVehiclePedIsIn(GetPlayerPed(-1), hotExit), taxActive) -- false/hotExit EL HOT EXIT ES PARA DESACTIVAR EL TAXIMETRO CUANDO EL CONDUCTOR SE BAJA A LOS PASAJEROS
-  else
-    if IsDriver() then
-      meterAttrs['meterVisible'] = true
-      taxActive = true
-      wasDriver = true
-      --pause = false
-      lastLocation = GetEntityCoords(GetVehiclePedIsIn(GetPlayerPed(-1), false))
-      vehicleOnStop()
-      --
-      updateMeter()
-      --
-      print("debug2")
-      getPlayersinTaxi(GetVehiclePedIsIn(GetPlayerPed(-1), hotExit), taxActive) --false/hotExit
-    else
-      ESX.ShowNotification('¡¡No estás conduciendo el ~y~Taxi~s~!!')
-    end
-  end
-end)
-
-function getPlayersinTaxi(taxi, on)
-  --ped = PlayerPedId()
-  --print(ped)
+function getPlayersinTaxi(taxi, rightNow)
   for i=0, 2, 1 do
     local pobrewn = GetPedInVehicleSeat(taxi, i)
     if pobrewn ~= 0 then
-      habiaUnPasajero = true
-      --ACTIVAR TAXIMETRO Y SETEARLO COMO IN TAXI
-        --print("vamos a colocar un debug aqui")
-       -- print(pobrewn)
-      --GetPlayerServerId(GetPlayerPed(pobrewn))
-      --
       for _, player in ipairs(GetActivePlayers()) do --player es la id creo
-        --print(player)
         local ped = GetPlayerPed(player)
-        --print(ped..' '..pobrewn)
         if ped == pobrewn then
-          if on then --ACTIVAMOS EL TAXIMETRO PARA LOS PASAJEROS TAMBIEN
-            TriggerServerEvent('esx_taximeter:setAsPassenger', GetPlayerServerId(player), false, nil) --GetPlayerServerId(GetPlayerPed(pobrewn))
-          else
-            TriggerServerEvent('esx_taximeter:noLongerPassenger', GetPlayerServerId(player)) --GetPlayerServerId(GetPlayerPed(pobrewn))
-          end
+          --if on then
+          TriggerServerEvent('esx_taximeter:updatePassenger', GetPlayerServerId(player), meterAttrs, rightNow) --GetPlayerServerId(GetPlayerPed(pobrewn))
+          --else
+            --TriggerServerEvent('esx_taximeter:noLongerPassenger', GetPlayerServerId(player)) --GetPlayerServerId(GetPlayerPed(pobrewn))
+          --end
         end
       end
-      --[[
-      if on then --ACTIVAMOS EL TAXIMETRO PARA LOS PASAJEROS TAMBIEN
-        TriggerServerEvent('esx_taximeter:setAsPassenger', GetPlayerServerId(pobrewn)) --GetPlayerServerId(GetPlayerPed(pobrewn))
-      else
-        TriggerServerEvent('esx_taximeter:noLongerPassenger', GetPlayerServerId(pobrewn)) --GetPlayerServerId(GetPlayerPed(pobrewn))
-      end--]]
     end
   end 
-end
-
-RegisterNetEvent("esx_taximeter:isPassenger")
-AddEventHandler("esx_taximeter:isPassenger", function(retake, data)
-  if retake then
-    isInTaxi = true
-    taxActive = true
-    meterAttrs = data
-    lastLocation = GetEntityCoords(GetVehiclePedIsIn(GetPlayerPed(-1), false))
-    updateMeter()
-
-  else
-    isInTaxi = true
-    taxActive = true
-    meterAttrs['meterVisible'] = true
-    lastLocation = GetEntityCoords(GetVehiclePedIsIn(GetPlayerPed(-1), false))
-    updateMeter()
-  end
-end)
-
-RegisterNetEvent("esx_taximeter:noPassenger")
-AddEventHandler("esx_taximeter:noPassenger", function()
-  isInTaxi = false
-  taxActive = false
-  --meterAttrs['meterVisible'] = false
-  resetTax()
-end)
-
-RegisterNetEvent("esx_taximeter:pauseTaximeter")
-AddEventHandler("esx_taximeter:pauseTaximeter", function(pause)
-  if IsDriver() then
-    pauseForClient(GetVehiclePedIsIn(GetPlayerPed(-1), false), meterAttrs['meterPause'])
-    if meterAttrs['meterPause'] then
-      meterAttrs['meterPause'] = false
-      lastLocation = GetEntityCoords(GetVehiclePedIsIn(GetPlayerPed(-1), false))
-      updateMeter()
-    else
-      meterAttrs['meterPause'] = true
-      updateMeter()
-    end
-  else
-    if pause then
-      meterAttrs['meterPause'] = false
-      lastLocation = GetEntityCoords(GetVehiclePedIsIn(GetPlayerPed(-1), false))
-      updateMeter()
-    else
-      meterAttrs['meterPause'] = true
-      updateMeter()
-    end
-  end
-end)
-
-function pauseForClient(vehicle, pause)
-  for i=0, 2, 1 do
-    local client = GetPedInVehicleSeat(vehicle, i)
-    if client ~= 0 then
-      for _, player in ipairs(GetActivePlayers()) do
-        local ped = GetPlayerPed(player)
-        if ped == client then
-          TriggerServerEvent('esx_taximeter:setPause', GetPlayerServerId(player), pause)
-        end
-      end
-    end
-  end
-end
-
-
-Citizen.CreateThread(function()
-  while true do
-    if taxActive then
-      --updatePassengerMeters()
-      --lastLocation = GetEntityCoords(GetVehiclePedIsIn(GetPlayerPed(-1), false))
-      vehicleOnStop()
-      if not meterAttrs['meterPause'] then
-        --vehicleOnStop()
-        calculateFareAmount()
-      end
-      updateMeter()
-    end
-    Citizen.Wait(2000)
-  end
-end)
-
-Citizen.CreateThread(function()
-  while true do
-    if habiaUnPasajero and taxActive then
-      searchForTheClient(GetVehiclePedIsIn(GetPlayerPed(-1), false))
-    end
-    Citizen.Wait(1000)
-  end
-end)
-
-function searchForTheClient(vehicle)
-  for i=0, 2, 1 do
-    local oldClient = GetPedInVehicleSeat(vehicle, i)
-    if oldClient ~= 0 then
-      habiaUnPasajero = false
-      lastFares = meterAttrs
-      for _, player in ipairs(GetActivePlayers()) do
-        local ped = GetPlayerPed(player)
-        if ped == oldClient then
-          TriggerServerEvent('esx_taximeter:setAsPassenger', GetPlayerServerId(player), true, lastFares)
-        end
-      end
-    end
-  end
 end
 
 function vehicleOnStop()
@@ -309,26 +178,17 @@ function vehicleOnStop()
   end
 end
 
---[[
-  Sends an update ping to display script
-]]
+--Sends an update ping to display script
 function updateMeter() --IMPORTANTE
   SendNUIMessage({type = 'update_meter', attributes = meterAttrs})
 end
 
---[[
-  Determines if the ped is the driver of the vehicle
-
-  Returns
-    boolean
-]]
+--Determines if the ped is the driver of the vehicle
 function IsDriver ()
   return GetPedInVehicleSeat(GetVehiclePedIsIn(GetPlayerPed(-1), false), -1) == GetPlayerPed(-1)
 end
 
---[[
-  Calculates the fare amount and updates the meter
-]]
+--Calculates the fare amount and updates the meter
 function calculateFareAmount() --IMPORTANTE
   if (meterAttrs['meterVisible']) and (meterAttrs['rateType'] == 'distance') and not (meterAttrs['rateAmount'] == nil)  then
     start = lastLocation
@@ -353,3 +213,74 @@ function calculateFareAmount() --IMPORTANTE
     end
   end
 end
+
+function IsInAuthorizedVehicle()
+	local playerPed = PlayerPedId()
+	local vehModel  = GetEntityModel(GetVehiclePedIsIn(playerPed, false))
+
+	for i=1, #Config.AuthorizedVehicles, 1 do
+		if vehModel == GetHashKey(Config.AuthorizedVehicles[i].model) then
+			return true
+		end
+	end
+	
+	return false
+end
+--// EVENTS
+
+RegisterNetEvent("esx_taximeter:noPassenger")
+AddEventHandler("esx_taximeter:noPassenger", function()
+  isPassenger = false
+  taxActive = false
+  resetTax()
+end)
+
+RegisterNetEvent("esx_taximeter:newValue")
+AddEventHandler("esx_taximeter:newValue", function(data, now)
+  meterAttrs = data
+  if meterAttrs['meterVisible'] then 
+    isPassenger = true
+    taxActive = true
+  else
+    TriggerEvent('esx_taximeter:noPassenger')
+  end
+  if now then
+    updateMeter()
+  end
+end)
+
+RegisterNetEvent("esx_taximeter:pauseTaximeter")
+AddEventHandler("esx_taximeter:pauseTaximeter", function()
+  if meterAttrs['meterPause'] then
+    meterAttrs['meterPause'] = false
+    lastLocation = GetEntityCoords(GetVehiclePedIsIn(GetPlayerPed(-1), false))
+  else
+    meterAttrs['meterPause'] = true
+  end
+  updateMeter()
+  getPlayersinTaxi(GetVehiclePedIsIn(GetPlayerPed(-1), false), true)
+end)
+
+RegisterNetEvent("esx_taximeter:toggleTaximeter")
+AddEventHandler("esx_taximeter:toggleTaximeter", function(hotExit)
+  if taxActive then
+    resetTax()
+    taxActive = false
+    getPlayersinTaxi(GetVehiclePedIsIn(GetPlayerPed(-1), hotExit), true) -- false/hotExit EL HOT EXIT ES PARA DESACTIVAR EL TAXIMETRO CUANDO EL CONDUCTOR SE BAJA A LOS PASAJEROS
+  else
+    if IsDriver() then
+      meterAttrs['meterVisible'] = true
+      taxActive = true
+      wasDriver = true
+      lastLocation = GetEntityCoords(GetVehiclePedIsIn(GetPlayerPed(-1), false))
+      vehicleOnStop()
+      --
+      updateMeter()
+      --
+      --print("debug2")
+      getPlayersinTaxi(GetVehiclePedIsIn(GetPlayerPed(-1), hotExit), true) --false/hotExit
+    else
+      ESX.ShowNotification('¡¡No estás conduciendo el ~y~Taxi~s~!!')
+    end
+  end
+end)

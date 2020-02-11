@@ -3,8 +3,6 @@ Config = {}
 -- The currency prefix to be used
 Config.CurrencyPrefix = '$'
 
--- Enables or Disables the vehicle restriction
-Config.RestrictVehicles = true
 
 -- Distance Measurement -- valid options are "mi" or "km". "mi" is default. If you
 -- change this be sure to change RateSuffix as well
@@ -22,3 +20,28 @@ Config.Base = '005.00' --10.00
 Config.Rate = 5 --15
 Config.RateType = 'distance' --'flat' es la otra opcion
 Config.OnStop = 0.033 --0.5
+
+Config.AuthorizedVehicles = {
+
+	{
+		model = 'taxi',
+		label = 'Taxi'
+	},
+	{
+		model = 'taxi4',
+		label = 'Taxi Classic'
+	},
+	{
+		model = 'taxi3',
+		label = 'Taxi Prius'
+	},
+	{
+		model = 'stretch',
+		label = 'Limusina'
+	},
+	{
+		model = 'airbus',
+		label = 'MicroBus'
+	},
+
+}
