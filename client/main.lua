@@ -161,6 +161,7 @@ function getPlayersinTaxi(taxi, rightNow)
           --else
             --TriggerServerEvent('esx_taximeter:noLongerPassenger', GetPlayerServerId(player)) --GetPlayerServerId(GetPlayerPed(pobrewn))
           --end
+          break
         end
       end
     end
