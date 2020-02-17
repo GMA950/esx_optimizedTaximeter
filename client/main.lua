@@ -80,14 +80,14 @@ Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(10)
     if IsControlJustReleased(0, Keys["1"]) then  --
-      if playerJobName == 'taxi' and IsPedInAnyVehicle(PlayerPedId(), false) then 
+      if playerJobName == 'taxi' and IsPedInAnyVehicle(PlayerPedId(), false) and IsDriver() then 
         if IsInAuthorizedVehicle() then
           TriggerEvent('esx_taximeter:toggleTaximeter', false)
         end
       end
     end
     if IsControlJustReleased(0, Keys["2"]) then 
-      if playerJobName == 'taxi' and IsPedInAnyVehicle(PlayerPedId(), false) then
+      if playerJobName == 'taxi' and IsPedInAnyVehicle(PlayerPedId(), false) and IsDriver() then
         if taxActive and IsInAuthorizedVehicle() then
           TriggerEvent('esx_taximeter:pauseTaximeter')
         end
@@ -197,6 +197,9 @@ function calculateFareAmount() --IMPORTANTE
     if start then
       current = GetEntityCoords(GetVehiclePedIsIn(GetPlayerPed(-1), false)) --GetEntityCoords(GetPlayerPed(-1))
       distance = CalculateTravelDistanceBetweenPoints(start, current)
+      --distance = Vdist2(start.x, start.y, 0, current.x, current.y, 0)/100
+      --distance = Vdist2(start, current)/10
+      --print(distance)
       lastLocation = current
       meterAttrs['distanceTraveled'] = meterAttrs['distanceTraveled'] + distance
 
@@ -210,6 +213,8 @@ function calculateFareAmount() --IMPORTANTE
         meterAttrs['currentFare'] = '00'..string.format("%.2f", fare_amount)
       elseif fare_amount < 100 then
         meterAttrs['currentFare'] = '0'..string.format("%.2f", fare_amount)
+      else
+        meterAttrs['currentFare'] = string.format("%.2f", fare_amount)
       end
     end
   end
